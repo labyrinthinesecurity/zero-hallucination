@@ -1,0 +1,4 @@
+At t=6, UNSAT Core contains 1 constraints:
+  BotG_motion_law_ok_from_step_5_to_6
+At t=6, UNSAT Core contains 1 constraints:
+  BotG_6_self_avoid_5_6

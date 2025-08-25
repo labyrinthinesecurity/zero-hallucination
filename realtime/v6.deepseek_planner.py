@@ -1,0 +1,127 @@
+#!/usr/bin/python3
+
+import json
+
+def generate_robot_plan():
+    grid_size = 30
+    num_robots = 10
+    T = 40  # More timesteps for proper path
+
+    robot_names = ['BotA', 'BotB', 'BotC', 'BotD', 'BotE', 'BotF', 'BotG', 'BotH', 'BotI', 'BotJ']
+
+    starts = [(0, 2*i) for i in range(num_robots)]
+    goals = [(10, 2*i+1) for i in range(num_robots)]
+
+    paths = {name: [] for name in robot_names}
+    obstacle = (6, 14)
+
+    for i, name in enumerate(robot_names):
+        start_x, start_y = starts[i]
+        goal_x, goal_y = goals[i]
+        current_x, current_y = start_x, start_y
+
+        path = [(current_x, current_y)]
+
+        for t in range(1, T):
+            if current_x == goal_x and current_y == goal_y:
+                path.append((current_x, current_y))
+                continue
+
+            next_x, next_y = current_x, current_y
+
+            # BotH: Go right to x=4, then up to y=15, then right to goal
+            if name == 'BotH':
+                if current_x < 4:
+                    next_x = (current_x + 1) % grid_size
+                elif current_x == 4 and current_y == 14:
+                    next_y = (current_y + 1) % grid_size  # Move up to y=15
+                elif current_x >= 4 and current_x < goal_x:
+                    next_x = (current_x + 1) % grid_size
+                elif current_x == goal_x and current_y != goal_y:
+                    if current_y < goal_y:
+                        next_y = (current_y + 1) % grid_size
+                    else:
+                        next_y = (current_y - 1) % grid_size
+                else:
+                    if current_x < goal_x:
+                        next_x = (current_x + 1) % grid_size
+                    else:
+                        next_y = (current_y + 1) % grid_size
+
+            # BotG: Go right to x=5, then up to y=14, then right to x=7, then down to y=13
+            elif name == 'BotG':
+                if current_x < 5:
+                    next_x = (current_x + 1) % grid_size
+                elif current_x == 5 and current_y == 12:
+                    next_y = (current_y + 1) % grid_size  # Move up to y=13
+                elif current_x == 5 and current_y == 13:
+                    next_y = (current_y + 1) % grid_size  # Move up to y=14
+                elif current_x == 5 and current_y == 14:
+                    next_x = (current_x + 1) % grid_size  # Move right to x=6
+                elif current_x == 6 and current_y == 14:
+                    next_x = (current_x + 1) % grid_size  # Move right to x=7
+                elif current_x == 7 and current_y == 14:
+                    next_y = (current_y - 1) % grid_size  # Move down to y=13
+                elif current_x < goal_x:
+                    next_x = (current_x + 1) % grid_size
+                elif current_y != goal_y:
+                    if current_y < goal_y:
+                        next_y = (current_y + 1) % grid_size
+                    else:
+                        next_y = (current_y - 1) % grid_size
+                else:
+                    next_x = (current_x + 1) % grid_size
+
+            # Normal movement for other bots
+            elif i % 2 == 0:  # Even-indexed
+                if current_y != goal_y:
+                    if (goal_y - current_y) % grid_size <= grid_size // 2:
+                        next_y = (current_y + 1) % grid_size
+                    else:
+                        next_y = (current_y - 1) % grid_size
+                else:
+                    if (goal_x - current_x) % grid_size <= grid_size // 2:
+                        next_x = (current_x + 1) % grid_size
+                    else:
+                        next_x = (current_x - 1) % grid_size
+            else:  # Odd-indexed
+                if current_x != goal_x:
+                    if (goal_x - current_x) % grid_size <= grid_size // 2:
+                        next_x = (current_x + 1) % grid_size
+                    else:
+                        next_x = (current_x - 1) % grid_size
+                else:
+                    if (goal_y - current_y) % grid_size <= grid_size // 2:
+                        next_y = (current_y + 1) % grid_size
+                    else:
+                        next_y = (current_y - 1) % grid_size
+
+            # Avoid obstacle
+            if (next_x, next_y) == obstacle:
+                if next_x != current_x:
+                    next_x = current_x
+                    if current_y < goal_y:
+                        next_y = (current_y + 1) % grid_size
+                    else:
+                        next_y = (current_y - 1) % grid_size
+                else:
+                    next_y = current_y
+                    if current_x < goal_x:
+                        next_x = (current_x + 1) % grid_size
+                    else:
+                        next_x = (current_x - 1) % grid_size
+
+            current_x, current_y = next_x, next_y
+            path.append((current_x, current_y))
+
+        paths[name] = path
+
+    return paths
+
+def main():
+    plan = generate_robot_plan()
+    json_output = json.dumps(plan, indent=2)
+    print(json_output)
+
+if __name__ == "__main__":
+    main()

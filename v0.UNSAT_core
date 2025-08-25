@@ -1,0 +1,6 @@
+Timesteps: 24
+At t=1, UNSAT Core contains 1 constraints:
+  BotB_move_1
+At t=1, UNSAT Core contains 1 constraints:
+  BotB_1_self_avoid_0_1
+

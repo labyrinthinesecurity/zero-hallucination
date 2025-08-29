@@ -153,7 +153,7 @@ So what does it mean, in plain English? The plan failed!
 ### The revised plan (V1)
 When notified of this result, Deepseek gains a quick understanding of the problem and fixes the issue in a V1
 
-This time, running the new code v1.deepseek_planner.py locally and submitting the JSON plan, v1.json, to symAI returns a SAT verdict after 7 minutes an 34 seconds of computation (on an entry-level linux VM).
+This time, running the new code v1.deepseek_planner.py locally and submitting the JSON plan, v1.json, to symAI returns a SAT verdict after 29 seconds of computation (on an entry-level linux VM).
 
 The satisfiable result can be found in v1.SAT_core
 
@@ -169,7 +169,7 @@ To update the symbolic AI, we pass the obstacle coordinates as a command line ar
 
 As expected, plan v1 which worked well in part I, becomes unsatisfiable. SymAI returns an UNSAT core
 
-t takes 5 iterations for Deepseek to find a satisfiable workaround. Deepseek's final plan, v7. It takes about 25 minutes for symAI to validate it on my standard VM. (So take the word "realtime" with a pinch of salt, here!).
+t takes 5 iterations for Deepseek to find a satisfiable workaround. Deepseek's final plan, v7. It takes about 38 seconds for symAI to validate it on my standard VM. (So take the word "realtime" with a pinch of salt, here!).
 
 ## Conclusion
 

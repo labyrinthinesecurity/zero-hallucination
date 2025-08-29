@@ -49,6 +49,35 @@ print(goal_positions)
 with open(args.plan, 'r') as f:
   llm_plan = json.load(f)
 
+# Remove trailing duplicate positions from each bot's path
+min_len = min(len(path) for path in llm_plan.values())
+for bot in llm_plan:
+    path = llm_plan[bot]
+    count = 0
+    for i in range(1, min_len):
+        if path[-i] == path[-(i+1)]:
+            count += 1
+        else:
+            break
+    if count > 0:
+        llm_plan[bot] = path[:-(count)]
+
+# Find the longest plan length
+max_len = max(len(path) for path in llm_plan.values())
+
+# Pad each bot's plan with its last tuple until it reaches max_len
+for bot, path in llm_plan.items():
+    if len(path) < max_len:
+        last_pos = path[-1]
+        llm_plan[bot].extend([last_pos] * (max_len - len(path)))
+
+for bot in llm_plan:
+    plen=len(llm_plan[bot])
+    print(plen)
+
+with open(args.plan+'.plot', 'w') as g:
+  json.dump(llm_plan,g,indent=2)
+
 if len(llm_plan['BotA'])!=len(llm_plan['BotB']):
   print("ERROR, path len mismatch")
   sys.exit()
@@ -73,7 +102,6 @@ allsat=True
 for t in range(T+1):
   print(t,"..")
   constraint=True
-  prefix_solver.push()
   for bot, route in llm_plan.items():
     for u, (x_val, y_val) in enumerate(route):
       if u==t: 
@@ -82,29 +110,19 @@ for t in range(T+1):
         constraint=And(constraint,positions[(bot,t)][0] == x_val)
         constraint=And(constraint,positions[(bot,t)][1] == y_val)
   check=prefix_solver.check()
-  prefix_solver.pop()
-  if check==sat:
-    prefix_solver.add(constraint)
-  else:
+  if check==unsat:
     allsat=False
-    dump_unsat(t,prefix_solver)
 
   constraint=True
-  prefix_solver.push()
   for (bot,u), (x,y) in positions.items():
     if u==t:
       prefix_solver.assert_and_track(And(x >= 0, x < N, y >= 0, y < N),Bool(f"{bot}_in_torus_{t}"))
       constraint=And(constraint,x >= 0, x < N, y >= 0, y < N)
   check=prefix_solver.check()
-  prefix_solver.pop()
-  if check==sat:
-    prefix_solver.add(constraint)
-  else:
+  if check==unsat:
       allsat=False
-      dump_unsat(t,prefix_solver)
 
   constraint=True
-  prefix_solver.push()
   for bot, (xg,yg) in goal_positions.items():
     if t>0:
         x1, y1 = positions[(bot,t-1)]
@@ -129,30 +147,20 @@ for t in range(T+1):
             Bool(f"{bot}_motion_law_ok_from_step_{t-1}_to_{t}")
         )
   check=prefix_solver.check()
-  prefix_solver.pop()
-  if check==sat:
-    prefix_solver.add(constraint)
-  else:
+  if check==unsat:
     allsat=False
-    dump_unsat(t,prefix_solver)
 
   constraint=True
-  prefix_solver.push()
   for (bot,u), (x,y) in positions.items():
     if u==t:
       for ox, oy in obstacles:
         constraint=And(constraint,Or(x != ox, y != oy))
         prefix_solver.assert_and_track(Or(x != ox, y != oy), Bool(f"{bot}_avoid_obstacle_{t}_{ox}_{oy}"))
   check=prefix_solver.check()
-  prefix_solver.pop()
-  if check==sat:
-    prefix_solver.add(constraint)
-  else:
+  if check==unsat:
     allsat=False
-    dump_unsat(t,prefix_solver)
 
   constraint=True
-  prefix_solver.push()
   for bot, (xg,yg) in goal_positions.items():
     for t1 in range(t+1):
         x1, y1 = positions[(bot,t1)]
@@ -166,17 +174,12 @@ for t in range(T+1):
             )
             prefix_solver.assert_and_track(self_avoid_ok, Bool(f"{bot}_{t}_self_avoid_{t1}_{t2}"))
   check=prefix_solver.check()
-  prefix_solver.pop()
-  if check==sat:
-    prefix_solver.add(constraint)
-  else:
+  if check==unsat:
     allsat=False
-    dump_unsat(t,prefix_solver)
 
   constraint=True
-  prefix_solver.push()
   for i, bot1 in enumerate(bots):
-    for t1 in range(t+1):
+    for t1 in range(t,t+1):
         x1, y1 = positions[(bot1,t1)]
         xg1, yg1 = goal_positions[bot1]
         for bot2 in bots[i+1:]:
@@ -197,17 +200,15 @@ for t in range(T+1):
               prefix_solver.assert_and_track(mutual_avoid_ok, Bool(f"{bot1}_{bot2}_mutual_avoid_{t1}_{t2}"))
 
   check=prefix_solver.check()
-  prefix_solver.pop()
-  if check==sat:
-    prefix_solver.add(constraint)
-  else:
+  if check==unsat:
     allsat=False
-    dump_unsat(t,prefix_solver)
 
   if allsat:
         longest_valid_prefix = t
   else:
-        break
+        dump_unsat(t,prefix_solver)
+        print("Longest valid prefix:", longest_valid_prefix)
+        sys.exit()
 
 print()
 if allsat:

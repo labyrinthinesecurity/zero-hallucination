@@ -1,0 +1,10 @@
+101a102,110
+> constraint=True
+> for (bot,spos) in start_positions.items():
+>   constraint=And(
+>                  constraint,
+>                  positions[(bot,0)][0]==spos[0],
+>                  positions[(bot,0)][1]==spos[1]
+>                 )
+>   prefix_solver.add(constraint)
+>

@@ -181,7 +181,15 @@ The real game-changer is using a Digital Twin as a "smart bouncer" between the A
 
 But here's where it gets really cool: we made the whole system time-aware. Instead of just solving static problems, our Digital Twin can handle real-time changes and unexpected events as they happen. This is huge for real-world applications.
 
+### Patch
 
+Marjan Sterjev noticed a bug in the data visualization of bot paths. This was due to symAI not loading the start positions as global constraints of the DT.
+
+So bots could pretty much start from anywhere without control, as long as they met all other rules...
+
+I have added a patch to fix symAI. It will break the validation of all json path files from v0.json to v6.json, but it will be more accurate.
+
+Only v7.json is not impacted, since (luckily) DeepSeek used proper start positions in its planner script.
 
 ### License
 LICENSE: CC-BY-4.0, labyrinthinesecurity
